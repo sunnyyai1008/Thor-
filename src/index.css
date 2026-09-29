@@ -1,52 +1,43 @@
 @import "tailwindcss";
 
 @theme {
-  /* Primary palette - Indigo/Violet accent */
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  /* Brand palette - Deep Indigo / Electric Violet */
+  --color-brand-50: #f0f3ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-400: #818cf8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #312e81;
 
-  /* Blue accent */
-  --color-accent-50: #eff6ff;
-  --color-accent-100: #dbeafe;
-  --color-accent-200: #bfdbfe;
-  --color-accent-300: #93c5fd;
-  --color-accent-400: #60a5fa;
-  --color-accent-500: #3b82f6;
-  --color-accent-600: #2563eb;
-  --color-accent-700: #1d4ed8;
+  /* Surface Dark Palette */
+  --color-surface-950: #07090e;
+  --color-surface-900: #0b0d17;
+  --color-surface-850: #0f1220;
+  --color-surface-800: #141829;
+  --color-surface-750: #1a1f35;
+  --color-surface-700: #212742;
+  --color-surface-600: #2d3559;
+  --color-surface-500: #3d4775;
+  --color-surface-400: #55629c;
+  --color-surface-300: #7b88c4;
 
-  /* Surface colors for dark theme */
-  --color-surface-900: #0f0f1a;
-  --color-surface-800: #16162a;
-  --color-surface-700: #1e1e35;
-  --color-surface-600: #272742;
-  --color-surface-500: #32324f;
-  --color-surface-400: #3f3f5c;
-  --color-surface-300: #52527a;
+  /* Accent Amber / Gold for Solar */
+  --color-solar-400: #fbbf24;
+  --color-solar-500: #f59e0b;
+  --color-solar-600: #d97706;
 
-  /* Success/Warning/Error */
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
-  --color-warning-500: #f59e0b;
-  --color-warning-600: #d97706;
-  --color-error-500: #ef4444;
-  --color-error-600: #dc2626;
+  /* Emerald for Profits and Rebates */
+  --color-emerald-400: #34d399;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
 
-  /* Font */
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-
-  /* Spacing */
-  --spacing-18: 4.5rem;
-  --spacing-88: 22rem;
-  --spacing-120: 30rem;
+  /* Fonts */
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 /* Base styles */
@@ -54,36 +45,90 @@ html {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
 }
 
-/* Dark theme (default) */
 body {
-  background-color: var(--color-surface-900);
+  background-color: #0b0d17;
   color: #e2e8f0;
+  min-height: 100vh;
+  background-image: 
+    radial-gradient(at 10% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+    radial-gradient(at 90% 0%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(15, 18, 32, 0.5) 0px, transparent 100%);
+  background-attachment: fixed;
 }
 
-/* Light theme */
-.light body,
-body.light {
-  background-color: #f8fafc;
-  color: #1e293b;
-}
-
-/* Scrollbar styling */
+/* Custom modern scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(11, 13, 23, 0.6);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-surface-400);
-  border-radius: 3px;
+  background: rgba(99, 102, 241, 0.25);
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-surface-300);
+  background: rgba(99, 102, 241, 0.45);
+}
+
+/* Custom Select appearance override */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem;
+}
+
+/* Number input spin buttons removal */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Glassmorphic card utility classes */
+.glass-card {
+  background: rgba(18, 22, 38, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.glass-card-interactive {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 24px -4px rgba(99, 102, 241, 0.35);
+}
+
+.glow-solar {
+  box-shadow: 0 0 24px -4px rgba(245, 158, 11, 0.3);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 24px -4px rgba(16, 185, 129, 0.3);
 }
