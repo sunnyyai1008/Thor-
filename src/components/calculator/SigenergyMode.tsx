@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { products, brands } from '../../data/products';
+import { usePricingStore } from '../../stores/pricingStore';
+import { brands } from '../../data/products';
 import { Sparkles, Server, Battery, Wifi, Sun, Info, Plus, Minus } from 'lucide-react';
 
 export const SigenergyMode: React.FC = () => {
+  const products = usePricingStore((s) => s.products);
   const [includePanels, setIncludePanels] = useState(true);
 
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);

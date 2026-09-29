@@ -1,9 +1,11 @@
 import React from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { products, brands } from '../../data/products';
+import { usePricingStore } from '../../stores/pricingStore';
+import { brands } from '../../data/products';
 import { Plus, Minus, Trash2, Zap, Info, Sparkles, Sun, ShieldCheck } from 'lucide-react';
 
 export const PanelInverterMode: React.FC = () => {
+  const products = usePricingStore((s) => s.products);
   const phase = useCalculatorStore((s) => s.phase);
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);
   const selectedInverters = useCalculatorStore((s) => s.systemSelection.selectedInverters);

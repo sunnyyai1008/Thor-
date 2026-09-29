@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { usePricingStore } from '../../stores/pricingStore';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { Lock, ShieldAlert, TrendingUp, AlertTriangle, CheckCircle, Percent } from 'lucide-react';
+import { Lock, ShieldAlert, TrendingUp, AlertTriangle, CheckCircle, Percent, SlidersHorizontal } from 'lucide-react';
 
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2 }).format(val);
 
 export const OwnerMarginPanel: React.FC = () => {
   const isOwner = usePricingStore((s) => s.isOwner);
+  const setIsSettingsOpen = usePricingStore((s) => s.setIsSettingsOpen);
   const setApprovedDiscountStore = usePricingStore((s) => s.setApprovedDiscount);
+  const installationCostsConfig = usePricingStore((s) => s.installationCosts);
 
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);
   const selectedInverters = useCalculatorStore((s) => s.systemSelection.selectedInverters);
@@ -54,8 +56,10 @@ export const OwnerMarginPanel: React.FC = () => {
     }
   }
 
-  // Installation flat fee & extras
-  const installationCosts = equipmentRevenue > 0 ? 1800 : 0;
+  // Installation dynamic fee & extras
+  const baseInstall = equipmentRevenue > 0 ? (installationCostsConfig.baseSolarInstall || 1800) : 0;
+  const batteryInstall = selectedBatteries.some((b) => b.product) ? (installationCostsConfig.batteryInstallAddon || 1200) : 0;
+  const installationCosts = baseInstall + batteryInstall;
   const extraCosts = selectedExtras.reduce((sum, e) => sum + (e.lineTotal || 0) * 0.6, 0); // ~60% COGS estimate for site works
   const totalCost = equipmentCosts + installationCosts + extraCosts;
 
@@ -192,6 +196,16 @@ export const OwnerMarginPanel: React.FC = () => {
           <span className="font-mono font-bold text-indigo-300">{formatCurrency(discountHeadroom)}</span>
         </div>
       </div>
+
+      {/* Button to open pricing and cost settings modal */}
+      <button
+        type="button"
+        onClick={() => setIsSettingsOpen(true)}
+        className="w-full mt-3.5 py-2.5 px-3.5 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] text-xs font-bold text-slate-200 hover:text-white flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm"
+      >
+        <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400" />
+        <span>Manage Equipment & Installation Rates</span>
+      </button>
     </div>
   );
 };

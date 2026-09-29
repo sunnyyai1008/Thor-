@@ -1,9 +1,11 @@
 import React, { useMemo } from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { products, brands, productFamilies } from '../../data/products';
+import { usePricingStore } from '../../stores/pricingStore';
+import { brands, productFamilies } from '../../data/products';
 import { BatteryCharging, Zap, Sun, ShieldAlert, Sparkles, Plus, Minus } from 'lucide-react';
 
 export const PanelBatteryComboMode: React.FC = () => {
+  const products = usePricingStore((s) => s.products);
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);
   const selectedInverters = useCalculatorStore((s) => s.systemSelection.selectedInverters);
   const selectedBatteries = useCalculatorStore((s) => s.systemSelection.selectedBatteries);

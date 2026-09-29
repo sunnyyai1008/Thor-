@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { products, brands, productFamilies } from '../../data/products';
+import { usePricingStore } from '../../stores/pricingStore';
+import { brands, productFamilies } from '../../data/products';
 import { Battery, Power, Settings, Home, HardDrive, CheckCircle2, ShieldAlert } from 'lucide-react';
 
 export const BatteryOnlyMode: React.FC = () => {
+  const products = usePricingStore((s) => s.products);
   const [couplingType, setCouplingType] = useState<'ac_coupled' | 'dc_coupled'>('ac_coupled');
   const [batteryLocation, setBatteryLocation] = useState('garage');
   const [backupOption, setBackupOption] = useState('none');

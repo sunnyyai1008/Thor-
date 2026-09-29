@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, User, Shield, Zap, MapPin } from 'lucide-react';
+import { Sun, Moon, User, Shield, Zap, MapPin, SlidersHorizontal } from 'lucide-react';
 import { useThemeStore } from '../../stores/themeStore';
 import { useCalculatorStore } from '../../stores/calculatorStore';
 import { usePricingStore } from '../../stores/pricingStore';
@@ -13,6 +13,7 @@ export const AppHeader: React.FC = () => {
   const setPhase = useCalculatorStore((s) => s.setPhase);
   const isOwner = usePricingStore((s) => s.isOwner);
   const setIsOwner = usePricingStore((s) => s.setIsOwner);
+  const setIsSettingsOpen = usePricingStore((s) => s.setIsSettingsOpen);
 
   return (
     <header className="sticky top-0 z-40 bg-[#0d101d]/90 backdrop-blur-md border-b border-white/[0.08] px-4 lg:px-6 py-2.5 transition-all">
@@ -122,6 +123,21 @@ export const AppHeader: React.FC = () => {
             title="Toggle Visual Theme"
           >
             {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+          </button>
+
+          {/* Price & Installation Cost Settings Button */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsOwner(true);
+              setIsSettingsOpen(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-900/60 to-violet-900/50 hover:from-indigo-600 hover:to-violet-600 border border-indigo-500/40 text-indigo-200 hover:text-white transition-all cursor-pointer shadow-sm shadow-indigo-950/40"
+            title="Configure Equipment Wholesale/Retail Prices and Installation Fees"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-400 group-hover:text-white" />
+            <span className="hidden sm:inline">Set Prices & Costs</span>
+            <span className="sm:hidden">Prices</span>
           </button>
 
           {/* Role Toggle with clear status badge */}
