@@ -10,10 +10,8 @@ const MODES = [
 ] as const;
 
 export const ModeSelector: React.FC = () => {
-  const { mode, setMode } = useCalculatorStore((s) => ({
-    mode: s.mode,
-    setMode: s.setMode,
-  }));
+  const mode = useCalculatorStore((s) => s.mode);
+  const setMode = useCalculatorStore((s) => s.setMode);
 
   return (
     <div className="bg-surface-900 border-b border-surface-800 px-4 py-3">

@@ -4,8 +4,9 @@ import { usePricingStore } from '../../stores/pricingStore';
 import { Lock } from 'lucide-react';
 
 export const OfficeNotes: React.FC = () => {
-  const { customerInfo, updateCustomerInfo } = useCalculatorStore();
-  const { isOwner } = usePricingStore();
+  const customerInfo = useCalculatorStore((s) => s.customerInfo);
+  const updateCustomerInfo = useCalculatorStore((s) => s.updateCustomerInfo);
+  const isOwner = usePricingStore((s) => s.isOwner);
 
   return (
     <div className="bg-surface-800 border border-surface-600 rounded-xl p-6 flex flex-col gap-6">

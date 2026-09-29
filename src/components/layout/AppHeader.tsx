@@ -5,13 +5,12 @@ import { useCalculatorStore } from '../../stores/calculatorStore';
 import { usePricingStore } from '../../stores/pricingStore';
 
 export const AppHeader: React.FC = () => {
-  const { theme, toggleTheme } = useThemeStore();
-  const { state, setState, phase, setPhase } = useCalculatorStore((s) => ({
-    state: s.state,
-    setState: s.setState,
-    phase: s.phase,
-    setPhase: s.setPhase,
-  }));
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
+  const state = useCalculatorStore((s) => s.state);
+  const setState = useCalculatorStore((s) => s.setState);
+  const phase = useCalculatorStore((s) => s.phase);
+  const setPhase = useCalculatorStore((s) => s.setPhase);
   const isOwner = usePricingStore((s) => s.isOwner);
   const setIsOwner = usePricingStore((s) => s.setIsOwner);
 

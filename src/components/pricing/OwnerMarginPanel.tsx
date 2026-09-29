@@ -13,7 +13,7 @@ const getMarginColor = (margin: number) => {
 };
 
 export const OwnerMarginPanel: React.FC = () => {
-  const { isOwner } = usePricingStore();
+  const isOwner = usePricingStore((s) => s.isOwner);
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);
   const selectedInverters = useCalculatorStore((s) => s.systemSelection.selectedInverters);
   const selectedBatteries = useCalculatorStore((s) => s.systemSelection.selectedBatteries);

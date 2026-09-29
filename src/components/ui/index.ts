@@ -5,3 +5,4 @@ export * from './Badge';
 export * from './NumberInput';
 export * from './ToggleSwitch';
 export * from './FormField';
+export * from './ErrorBoundary';

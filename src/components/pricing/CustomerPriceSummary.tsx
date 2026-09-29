@@ -17,8 +17,8 @@ export const CustomerPriceSummary: React.FC = () => {
   const selectedControllers = useCalculatorStore((s) => s.systemSelection.selectedControllers);
   const selectedGateways = useCalculatorStore((s) => s.systemSelection.selectedGateways);
   const selectedExtras = useCalculatorStore((s) => s.selectedExtras);
-  const { customerSummary } = usePricingStore();
-  const { quoteStatus } = useQuoteStore();
+  const customerSummary = usePricingStore((s) => s.customerSummary);
+  const quoteStatus = useQuoteStore((s) => s.quoteStatus);
 
   // Calculate system subtotal from all selected products
   let systemSubtotal = 0;
