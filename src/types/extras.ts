@@ -35,6 +35,9 @@ export interface SelectedExtra {
   isPricePending: boolean;
   isAutoAdded: boolean;
   autoAddReason?: string;
+  chargingMethod?: ChargingMethod;
+  bundleIncludedQty?: number | null;
+  bundleOverageUnitPrice?: number | null;
 }
 
 export interface ChargingRule {

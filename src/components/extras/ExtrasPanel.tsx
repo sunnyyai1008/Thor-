@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
 import { extrasCatalogue } from '../../data/extras';
-import { Search, Plus, X, AlertTriangle, Wrench, Check, Sparkles } from 'lucide-react';
+import { Search, Plus, X, AlertTriangle, Wrench, Check, Sparkles, Zap } from 'lucide-react';
 import type { ExtraCatalogueItem, SelectedExtra } from '../../types/extras';
 
 const formatCurrency = (val: number) =>
@@ -15,10 +15,30 @@ const unitLabels: Record<string, string> = {
   per_circuit: 'Per Circuit',
 };
 
-function calculateLineTotal(extra: SelectedExtra): number {
+export function calculateLineTotal(extra: SelectedExtra): number {
   if (extra.isIncludedInPackage) return 0;
+  if (extra.isPricePending) return 0;
   const qty = extra.quantity || 1;
   const unitPrice = extra.unitPrice || 0;
+
+  // Section 9: Structured bundle covering up to specified quantity + overage
+  if (
+    extra.bundleIncludedQty != null &&
+    extra.bundleOverageUnitPrice != null &&
+    extra.bundleIncludedQty > 0
+  ) {
+    if (qty <= extra.bundleIncludedQty) {
+      return unitPrice;
+    }
+    const overage = (qty - extra.bundleIncludedQty) * extra.bundleOverageUnitPrice;
+    return unitPrice + overage;
+  }
+
+  // Fixed per job
+  if (extra.chargingMethod === 'fixed' || extra.unit === 'Fixed') {
+    return unitPrice;
+  }
+
   return qty * unitPrice;
 }
 
@@ -56,13 +76,17 @@ export const ExtrasPanel: React.FC = () => {
   }, [searchTerm, activeCategory, selectedExtras]);
 
   const handleAddExtra = (catalogueItem: ExtraCatalogueItem) => {
+    const defaultQty = catalogueItem.bundleIncludedQty ? catalogueItem.bundleIncludedQty : 1;
     const newExtra: SelectedExtra = {
       id: `extra-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
       catalogueItemId: catalogueItem.id,
       description: catalogueItem.name,
-      quantity: 1,
+      quantity: defaultQty,
       unit: unitLabels[catalogueItem.chargingMethod] || catalogueItem.chargingMethod,
       unitPrice: catalogueItem.unitPrice,
+      chargingMethod: catalogueItem.chargingMethod,
+      bundleIncludedQty: catalogueItem.bundleIncludedQty,
+      bundleOverageUnitPrice: catalogueItem.bundleOverageUnitPrice,
       lineTotal: catalogueItem.unitPrice,
       isIncludedInPackage: false,
       isPricePending: catalogueItem.isPricePending,
@@ -86,10 +110,12 @@ export const ExtrasPanel: React.FC = () => {
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-white tracking-tight">Extras & Custom Site Work</h3>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 font-mono">
-                {selectedExtras.length} Selected
+                {selectedExtras.length} Items (No 10-item limit)
               </span>
             </div>
-            <p className="text-xs text-slate-400">Add-ons, switchboard upgrades, tilt frames, and specialist works</p>
+            <p className="text-xs text-slate-400">
+              Site surcharges, tilt frames, electrical monitoring, and specialist services
+            </p>
           </div>
         </div>
 
@@ -133,7 +159,7 @@ export const ExtrasPanel: React.FC = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 w-4 h-4" />
             <input
               type="text"
-              placeholder="Search add-on catalogue (e.g. Smart Meter, Scissor lift, Bird proofing)..."
+              placeholder="Search add-on catalogue (e.g. Smart Meter, Scissor lift, Bird proofing, Removal)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full bg-[#121526] border border-white/[0.1] rounded-xl py-2.5 pl-10 pr-4 text-white text-xs focus:outline-none focus:border-indigo-500 placeholder:text-slate-600"
@@ -153,15 +179,15 @@ export const ExtrasPanel: React.FC = () => {
                     <div className="text-xs font-bold text-white truncate group-hover:text-indigo-300 transition-colors">
                       {item.name}
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+                    <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5 flex-wrap">
                       <span className="font-mono text-emerald-400 font-semibold">
                         {item.isPricePending ? 'Price Pending' : formatCurrency(item.unitPrice)}
                       </span>
                       <span>•</span>
                       <span>{unitLabels[item.chargingMethod] || item.chargingMethod}</span>
                       {item.bundleIncludedQty && (
-                        <span className="text-[10px] text-amber-300">
-                          (incl. {item.bundleIncludedQty})
+                        <span className="text-[10px] text-amber-300 font-mono">
+                          (incl. {item.bundleIncludedQty}; +${item.bundleOverageUnitPrice} overage)
                         </span>
                       )}
                     </div>
@@ -186,8 +212,8 @@ export const ExtrasPanel: React.FC = () => {
           <thead className="text-[11px] text-slate-400 uppercase bg-[#101424] border-b border-white/[0.06]">
             <tr>
               <th className="px-4 py-3 font-semibold">Description</th>
-              <th className="px-3 py-3 font-semibold w-24 text-center">Qty</th>
-              <th className="px-3 py-3 font-semibold">Charging Rate</th>
+              <th className="px-3 py-3 font-semibold w-24 text-center">Quantity</th>
+              <th className="px-3 py-3 font-semibold">Rate / Allowance</th>
               <th className="px-4 py-3 font-semibold text-right">Line Total</th>
               <th className="px-3 py-3 font-semibold w-10 text-center"></th>
             </tr>
@@ -196,11 +222,16 @@ export const ExtrasPanel: React.FC = () => {
             {selectedExtras.map((extra) => (
               <tr key={extra.id} className="hover:bg-white/[0.02] transition-colors">
                 <td className="px-4 py-3 font-medium text-white">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-semibold text-slate-200">{extra.description}</span>
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-semibold text-slate-200">{extra.description}</span>
+                      {extra.isAutoAdded && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1 font-bold">
+                          <Zap className="w-3 h-3 text-indigo-400" /> Auto Site Charge
+                        </span>
+                      )}
                       {extra.isIncludedInPackage && (
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
                           Included in Package
                         </span>
                       )}
@@ -209,25 +240,53 @@ export const ExtrasPanel: React.FC = () => {
                           <AlertTriangle className="w-2.5 h-2.5" /> Price Pending
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-500">{extra.unit}</span>
                     </div>
+
+                    {extra.autoAddReason && (
+                      <span className="text-[10px] text-indigo-300/80 italic">
+                        {extra.autoAddReason}
+                      </span>
+                    )}
+
+                    {extra.bundleIncludedQty && (
+                      <span className="text-[10px] text-amber-300/80 font-mono">
+                        Base covers {extra.bundleIncludedQty} units. Above {extra.bundleIncludedQty}: +${extra.bundleOverageUnitPrice} ea.
+                      </span>
+                    )}
                   </div>
                 </td>
+
                 <td className="px-3 py-3 text-center">
                   <input
                     type="number"
                     min="1"
                     value={extra.quantity}
-                    onChange={(e) => updateExtraQuantity(extra.id, parseInt(e.target.value) || 1)}
+                    onChange={(e) => updateExtraQuantity(extra.id, Math.max(1, parseInt(e.target.value) || 1))}
                     className="w-16 bg-[#141829] border border-white/[0.1] rounded-lg px-2 py-1 text-white text-center font-mono text-xs focus:outline-none focus:border-indigo-500"
                   />
                 </td>
+
                 <td className="px-3 py-3 text-slate-300 font-mono">
-                  {extra.isIncludedInPackage ? '$0.00' : formatCurrency(extra.unitPrice)}
+                  {extra.isPricePending ? (
+                    <span className="text-amber-400 font-bold">Pending</span>
+                  ) : extra.isIncludedInPackage ? (
+                    '$0.00'
+                  ) : (
+                    <span>
+                      {formatCurrency(extra.unitPrice)}
+                      <span className="text-[10px] text-slate-500 ml-1">({extra.unit})</span>
+                    </span>
+                  )}
                 </td>
+
                 <td className="px-4 py-3 text-right font-mono font-bold text-white">
-                  {formatCurrency(calculateLineTotal(extra))}
+                  {extra.isPricePending ? (
+                    <span className="text-amber-400 italic">Pending</span>
+                  ) : (
+                    formatCurrency(calculateLineTotal(extra))
+                  )}
                 </td>
+
                 <td className="px-3 py-3 text-center">
                   <button
                     type="button"
@@ -254,17 +313,22 @@ export const ExtrasPanel: React.FC = () => {
 
       {/* Pending Price Blocker Notice */}
       {hasPendingPrice && (
-        <div className="mt-3.5 p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-300">
+        <div className="mt-3.5 p-3 rounded-xl bg-amber-950/40 border border-amber-500/40 flex items-start gap-2.5 text-xs text-amber-200 shadow-md">
           <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-          <p>
-            <strong className="text-white">Price Pending Notice:</strong> One or more specialist line items require custom engineering assessment. Generating a finalized binding quote is blocked until priced or excluded.
-          </p>
+          <div>
+            <strong className="text-amber-300 block mb-0.5 font-bold">
+              Specialist Price Pending — Quotation Blocked
+            </strong>
+            <span>
+              Specialist work is marked as "Price Pending". Issuing a finalized customer quote or PDF is blocked until this item is explicitly priced or excluded.
+            </span>
+          </div>
         </div>
       )}
 
       {/* Extras Subtotal Bar */}
       <div className="flex items-center justify-between mt-4 pt-3 border-t border-white/[0.06] text-xs">
-        <span className="text-slate-400 font-medium">Total Additional Works:</span>
+        <span className="text-slate-400 font-medium">Total Additional Site Works:</span>
         <span className="text-base font-extrabold text-white font-mono">{formatCurrency(extrasTotal)}</span>
       </div>
     </div>

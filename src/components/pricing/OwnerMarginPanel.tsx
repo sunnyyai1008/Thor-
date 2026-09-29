@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { usePricingStore } from '../../stores/pricingStore';
 import { useCalculatorStore } from '../../stores/calculatorStore';
-import { Lock, ShieldAlert, TrendingUp, AlertTriangle, CheckCircle, Percent, SlidersHorizontal } from 'lucide-react';
+import { useQuoteStore } from '../../stores/quoteStore';
+import { Lock, ShieldAlert, TrendingUp, AlertTriangle, CheckCircle, Percent, SlidersHorizontal, Check, ThumbsDown } from 'lucide-react';
 
 const formatCurrency = (val: number) =>
   new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD', minimumFractionDigits: 2 }).format(val);
@@ -11,6 +12,11 @@ export const OwnerMarginPanel: React.FC = () => {
   const setIsSettingsOpen = usePricingStore((s) => s.setIsSettingsOpen);
   const setApprovedDiscountStore = usePricingStore((s) => s.setApprovedDiscount);
   const installationCostsConfig = usePricingStore((s) => s.installationCosts);
+
+  const quoteStatus = useQuoteStore((s) => s.quoteStatus);
+  const discountRequest = useQuoteStore((s) => s.discountRequest);
+  const approveDiscount = useQuoteStore((s) => s.approveDiscount);
+  const rejectDiscount = useQuoteStore((s) => s.rejectDiscount);
 
   const selectedPanels = useCalculatorStore((s) => s.systemSelection.selectedPanels);
   const selectedInverters = useCalculatorStore((s) => s.systemSelection.selectedInverters);
@@ -112,6 +118,46 @@ export const OwnerMarginPanel: React.FC = () => {
           Restricted View
         </span>
       </div>
+
+      {/* Pending Discount Approval Card (Section 11) */}
+      {quoteStatus === 'discount_requested' && discountRequest && (
+        <div className="mb-4 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+              Sales Discount Request Pending
+            </span>
+            <span className="text-xs font-mono font-bold text-amber-400">
+              {formatCurrency(discountRequest.amount)}
+            </span>
+          </div>
+          <div className="text-[11px] text-slate-300 bg-black/40 p-2 rounded-lg border border-white/[0.06] italic">
+            "{discountRequest.reason || 'No justification provided'}"
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => {
+                approveDiscount(discountRequest.amount, 'Owner');
+                setApprovedDiscount(discountRequest.amount);
+                setApprovedDiscountStore(discountRequest.amount);
+              }}
+              className="flex-1 py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 cursor-pointer transition-all"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Approve ${discountRequest.amount}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => rejectDiscount('Declined by owner')}
+              className="py-1.5 px-3 rounded-lg bg-white/[0.08] hover:bg-rose-950/40 text-slate-300 hover:text-rose-300 text-xs flex items-center gap-1 cursor-pointer transition-all"
+            >
+              <ThumbsDown className="w-3.5 h-3.5" />
+              <span>Reject</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Cost Breakdown */}
       <div className="space-y-2 text-xs">

@@ -2,6 +2,7 @@ import React from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
 import { usePricingStore } from '../../stores/pricingStore';
 import { brands } from '../../data/products';
+import { SearchableSelect, type SelectOption } from '../ui/SearchableSelect';
 import { Plus, Minus, Trash2, Zap, Info, Sparkles, Sun, ShieldCheck } from 'lucide-react';
 
 export const PanelInverterMode: React.FC = () => {
@@ -19,8 +20,32 @@ export const PanelInverterMode: React.FC = () => {
     (p) => p.category === 'inverter' && (p.phase === phase || !p.phase)
   );
 
-  const handlePanelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const panel = panelProducts.find((p) => p.id === e.target.value) || null;
+  const panelOptions: SelectOption[] = panelProducts.map((p) => {
+    const brand = brands.find((b) => b.id === p.brandId)?.name || '';
+    return {
+      id: p.id,
+      label: p.name,
+      sublabel: `${p.powerWatts}W • Tier-1`,
+      badge: p.isPriority ? 'Priority' : undefined,
+      stockStatus: p.stockStatus,
+      group: brand || 'Solar Modules',
+    };
+  });
+
+  const inverterOptions: SelectOption[] = inverterProducts.map((p) => {
+    const brand = brands.find((b) => b.id === p.brandId)?.name || '';
+    return {
+      id: p.id,
+      label: p.name,
+      sublabel: `${(p.powerWatts || 0) / 1000}kW • ${p.type}`,
+      badge: p.isPriority ? 'Priority' : undefined,
+      stockStatus: p.stockStatus,
+      group: brand || 'Inverters',
+    };
+  });
+
+  const handlePanelChange = (productId: string) => {
+    const panel = panelProducts.find((p) => p.id === productId) || null;
     setSelectedPanels(panel, selectedPanels.quantity || 16);
   };
 
@@ -64,25 +89,14 @@ export const PanelInverterMode: React.FC = () => {
           {/* Panel Dropdown */}
           <div className="md:col-span-8">
             <label className="block text-xs font-semibold text-slate-300 mb-2">
-              Select Panel Model
+              Select Panel Model (Search by Brand, Model, Wattage)
             </label>
-            <div className="relative">
-              <select
-                value={selectedPanels.product?.id || ''}
-                onChange={handlePanelChange}
-                className="w-full bg-[#0d101d] border border-white/[0.1] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all cursor-pointer font-medium"
-              >
-                <option value="">Select Photovoltaic Module...</option>
-                {panelProducts.map((p) => {
-                  const brand = brands.find((b) => b.id === p.brandId)?.name || '';
-                  return (
-                    <option key={p.id} value={p.id}>
-                      {brand ? `${brand} - ` : ''}{p.name} ({p.powerWatts}W) {p.isPriority ? '★ Priority' : ''}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
+            <SearchableSelect
+              options={panelOptions}
+              value={selectedPanels.product?.id || ''}
+              onChange={handlePanelChange}
+              placeholder="Search or select photovoltaic module..."
+            />
 
             {selectedPanels.product && (
               <div className="flex items-center gap-2 mt-2.5 flex-wrap">
@@ -198,25 +212,15 @@ export const PanelInverterMode: React.FC = () => {
                       </span>
                     )}
                   </div>
-                  <select
+                  <SearchableSelect
+                    options={inverterOptions}
                     value={inv.product?.id || ''}
-                    onChange={(e) => {
-                      const product =
-                        inverterProducts.find((p) => p.id === e.target.value) || null;
+                    onChange={(id) => {
+                      const product = inverterProducts.find((p) => p.id === id) || null;
                       updateInverter(index, product, inv.quantity);
                     }}
-                    className="w-full bg-[#070912] border border-white/[0.1] rounded-xl px-3.5 py-2.5 text-white text-sm focus:outline-none focus:border-indigo-500 transition-all cursor-pointer font-medium"
-                  >
-                    <option value="">Select Inverter Unit...</option>
-                    {inverterProducts.map((p) => {
-                      const brand = brands.find((b) => b.id === p.brandId)?.name || '';
-                      return (
-                        <option key={p.id} value={p.id}>
-                          {brand ? `${brand} - ` : ''}{p.name} ({(p.powerWatts || 0) / 1000}kW)
-                        </option>
-                      );
-                    })}
-                  </select>
+                    placeholder="Search or select inverter unit..."
+                  />
                 </div>
 
                 {/* Quantity */}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { AppLayout } from './components/layout/AppLayout';
 import { CustomerSiteForm } from './components/customer/CustomerSiteForm';
 import { OfficeNotes } from './components/customer/OfficeNotes';
@@ -10,6 +11,7 @@ import { CustomerPriceSummary } from './components/pricing/CustomerPriceSummary'
 import { OwnerMarginPanel } from './components/pricing/OwnerMarginPanel';
 import { OwnerPricingSettingsModal } from './components/pricing/OwnerPricingSettingsModal';
 import { useCalculatorStore } from './stores/calculatorStore';
+import { useAutoSiteCharges } from './hooks/useAutoSiteCharges';
 
 function CalculatorContent() {
   const mode = useCalculatorStore((s) => s.mode);
@@ -29,6 +31,23 @@ function CalculatorContent() {
 }
 
 function App() {
+  // Section 2 & 9: Explicit auto-added site charge rule synchronizer
+  useAutoSiteCharges();
+
+  // Section 11: Warning before leaving with unsaved changes
+  const isDirty = useCalculatorStore((s) => s.isDirty);
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
   const sidebar = (
     <div className="space-y-4">
       <CustomerPriceSummary />

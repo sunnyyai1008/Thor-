@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useCalculatorStore } from '../../stores/calculatorStore';
 import { usePricingStore } from '../../stores/pricingStore';
 import { useQuoteStore } from '../../stores/quoteStore';
+import { QuotePdfModal } from '../quotes/QuotePdfModal';
 import {
   AlertCircle,
   FileText,
@@ -14,6 +15,7 @@ import {
   DollarSign,
   TrendingDown,
   ChevronRight,
+  GitCompare,
 } from 'lucide-react';
 
 const formatCurrency = (val: number) =>
@@ -35,11 +37,14 @@ export const CustomerPriceSummary: React.FC = () => {
   const quoteStatus = useQuoteStore((s) => s.quoteStatus);
   const requestDiscount = useQuoteStore((s) => s.requestDiscount);
   const saveDraft = useQuoteStore((s) => s.saveDraft);
+  const discountApproval = useQuoteStore((s) => s.discountApproval);
 
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
   const [requestedAmount, setRequestedAmount] = useState('');
   const [discountReason, setDiscountReason] = useState('');
   const [saveToast, setSaveToast] = useState(false);
+  const [conflictResolved, setConflictResolved] = useState(false);
 
   // Compute live subtotal
   let systemSubtotal = 0;
@@ -253,14 +258,37 @@ export const CustomerPriceSummary: React.FC = () => {
 
           <button
             type="button"
-            onClick={() => alert('PDF generation feature triggered! Preview will download shortly.')}
+            onClick={() => setPdfModalOpen(true)}
             className="py-2 px-3 rounded-xl bg-[#141829] hover:bg-[#1a2037] border border-white/[0.1] hover:border-white/[0.2] text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export PDF</span>
+            <span>Export Quote PDF</span>
           </button>
         </div>
       </div>
+
+      {/* Section 11: Conflict Reconciliation Dialog */}
+      {quoteStatus === 'discount_approved' && isDirty && !conflictResolved && (
+        <div className="mt-3 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 space-y-2 text-xs">
+          <div className="flex items-center gap-1.5 font-bold text-amber-300">
+            <GitCompare className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Reconciliation Required: Pricing Modified</span>
+          </div>
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            An owner discount of {formatCurrency(approvedDiscount)} was approved, but the system configuration was modified afterwards. Reconcile this quote to proceed:
+          </p>
+          <button
+            type="button"
+            onClick={() => setConflictResolved(true)}
+            className="w-full py-1.5 px-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm cursor-pointer"
+          >
+            Reconcile & Keep Approved Discount
+          </button>
+        </div>
+      )}
+
+      {/* Customer Quotation PDF Preview & Print Modal */}
+      <QuotePdfModal isOpen={pdfModalOpen} onClose={() => setPdfModalOpen(false)} />
 
       {/* Discount Request Modal */}
       {discountModalOpen && (

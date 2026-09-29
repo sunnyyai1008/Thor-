@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Search, ChevronDown, Check } from 'lucide-react';
+import { Search, ChevronDown, Check, Sparkles } from 'lucide-react';
 import Fuse from 'fuse.js';
 
 export interface SelectOption {
@@ -7,6 +7,8 @@ export interface SelectOption {
   label: string;
   sublabel?: string;
   badge?: string;
+  badgeType?: 'priority' | 'warning' | 'neutral' | 'success';
+  stockStatus?: 'in_stock' | 'low_stock' | 'out_of_stock' | 'discontinued';
   thumbnailUrl?: string;
   group?: string;
 }
@@ -31,12 +33,12 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [highlightedIndex, setHighlightedIndex] = useState(0);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const selectedOption = options.find(opt => opt.id === value);
+  const selectedOption = options.find((opt) => opt.id === value);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -52,9 +54,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     if (!searchQuery) return options;
     const fuse = new Fuse(options, {
       keys: ['label', 'sublabel', 'group'],
-      threshold: 0.3,
+      threshold: 0.35,
     });
-    return fuse.search(searchQuery).map(result => result.item);
+    return fuse.search(searchQuery).map((result) => result.item);
   }, [options, searchQuery]);
 
   const groupedOptions = React.useMemo(() => {
@@ -68,7 +70,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   const flatGroupedOptions = React.useMemo(() => {
     const flat: SelectOption[] = [];
-    Object.values(groupedOptions).forEach(groupOpts => {
+    Object.values(groupedOptions).forEach((groupOpts) => {
       flat.push(...groupOpts);
     });
     return flat;
@@ -77,6 +79,12 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   useEffect(() => {
     setHighlightedIndex(0);
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      setTimeout(() => inputRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (!isOpen) {
@@ -90,11 +98,11 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex(prev => (prev < flatGroupedOptions.length - 1 ? prev + 1 : prev));
+        setHighlightedIndex((prev) => (prev < flatGroupedOptions.length - 1 ? prev + 1 : prev));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex(prev => (prev > 0 ? prev - 1 : prev));
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : prev));
         break;
       case 'Enter':
         e.preventDefault();
@@ -111,55 +119,101 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
     }
   };
 
+  const getStockIndicator = (status?: string) => {
+    switch (status) {
+      case 'low_stock':
+        return <span className="w-2 h-2 rounded-full bg-amber-400" title="Low Stock" />;
+      case 'out_of_stock':
+        return <span className="w-2 h-2 rounded-full bg-rose-500" title="Out of Stock" />;
+      default:
+        return <span className="w-2 h-2 rounded-full bg-emerald-400" title="In Stock" />;
+    }
+  };
+
   return (
     <div className={`relative ${className}`} ref={containerRef}>
+      {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleKeyDown}
-        className="w-full flex items-center justify-between px-3 py-2 bg-surface-800 border border-surface-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-gray-200"
+        className={`w-full flex items-center justify-between px-3.5 py-2.5 bg-[#0d101d] border rounded-xl shadow-inner transition-all text-left cursor-pointer ${
+          isOpen
+            ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+            : 'border-white/[0.1] hover:border-white/[0.2]'
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
-        <span className="truncate">
-          {selectedOption ? selectedOption.label : placeholder}
-        </span>
-        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2.5 overflow-hidden">
+          {selectedOption ? (
+            <>
+              {selectedOption.stockStatus && getStockIndicator(selectedOption.stockStatus)}
+              <div className="truncate">
+                <span className="text-white text-xs sm:text-sm font-semibold truncate">
+                  {selectedOption.label}
+                </span>
+                {selectedOption.sublabel && (
+                  <span className="text-[11px] text-slate-400 ml-2 font-mono">
+                    {selectedOption.sublabel}
+                  </span>
+                )}
+              </div>
+            </>
+          ) : (
+            <span className="text-slate-500 text-xs sm:text-sm">{placeholder}</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+          {selectedOption?.badge && (
+            <span className="hidden sm:inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              {selectedOption.badge}
+            </span>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180 text-indigo-400' : ''}`}
+          />
+        </div>
       </button>
 
+      {/* Popover Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 bg-surface-800 border border-surface-600 rounded-md shadow-lg">
-          <div className="p-2 border-b border-surface-600 sticky top-0 bg-surface-800 z-10 rounded-t-md">
+        <div className="absolute z-50 w-full mt-1.5 bg-[#0e1120] border border-indigo-500/30 rounded-xl shadow-2xl overflow-hidden backdrop-blur-xl">
+          {/* Fixed Search Box at top of dropdown */}
+          <div className="p-2 border-b border-white/[0.08] sticky top-0 bg-[#0e1120] z-10">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 ref={inputRef}
                 type="text"
-                autoFocus
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Search..."
-                className="w-full pl-8 pr-3 py-1.5 bg-surface-900 border border-surface-600 rounded text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-200"
+                placeholder="Search brand, model, wattage..."
+                className="w-full pl-8 pr-3 py-1.5 bg-[#070912] border border-white/[0.1] rounded-lg text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
           </div>
-          
-          <ul ref={listRef} className="max-h-[300px] overflow-y-auto py-1">
+
+          {/* Scrollable Results List */}
+          <ul ref={listRef} className="max-h-60 overflow-y-auto py-1">
             {Object.keys(groupedOptions).length === 0 ? (
-              <li className="px-3 py-2 text-sm text-gray-400 text-center">No options found</li>
+              <li className="px-4 py-6 text-xs text-slate-400 text-center">
+                No matching equipment found. Try another search.
+              </li>
             ) : (
               Object.entries(groupedOptions).map(([group, opts]) => (
                 <div key={group}>
                   {group !== 'Default' && (
-                    <div className="px-3 py-1 text-xs font-semibold text-gray-400 bg-surface-900/50">
+                    <div className="px-3.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-white/[0.02]">
                       {group}
                     </div>
                   )}
                   {opts.map((option) => {
-                    const index = flatGroupedOptions.findIndex(o => o.id === option.id);
+                    const index = flatGroupedOptions.findIndex((o) => o.id === option.id);
                     const isSelected = value === option.id;
                     const isHighlighted = highlightedIndex === index;
-                    
+
                     return (
                       <li
                         key={option.id}
@@ -169,28 +223,36 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                           setSearchQuery('');
                         }}
                         onMouseEnter={() => setHighlightedIndex(index)}
-                        className={`flex items-center justify-between px-3 py-2 cursor-pointer text-sm ${
-                          isHighlighted ? 'bg-primary-500/10 text-primary-50' : 'text-gray-200 hover:bg-surface-700'
+                        className={`flex items-center justify-between px-3.5 py-2 cursor-pointer text-xs transition-colors ${
+                          isSelected
+                            ? 'bg-indigo-600/20 text-white border-l-2 border-indigo-500'
+                            : isHighlighted
+                            ? 'bg-white/[0.05] text-white'
+                            : 'text-slate-300 hover:bg-white/[0.03]'
                         }`}
                       >
-                        <div className="flex items-center gap-3 overflow-hidden">
-                          {option.thumbnailUrl && (
-                            <img src={option.thumbnailUrl} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
-                          )}
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          {option.stockStatus && getStockIndicator(option.stockStatus)}
                           <div className="flex flex-col overflow-hidden">
-                            <span className="truncate font-medium">{option.label}</span>
+                            <span className="font-semibold text-white truncate">
+                              {option.label}
+                            </span>
                             {option.sublabel && (
-                              <span className="truncate text-xs text-gray-400">{option.sublabel}</span>
+                              <span className="text-[10px] text-slate-400 font-mono truncate">
+                                {option.sublabel}
+                              </span>
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+
+                        <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
                           {option.badge && (
-                            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-surface-600 rounded text-gray-300">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
                               {option.badge}
                             </span>
                           )}
-                          {isSelected && <Check className="w-4 h-4 text-primary-500" />}
+                          {isSelected && <Check className="w-4 h-4 text-indigo-400" />}
                         </div>
                       </li>
                     );
